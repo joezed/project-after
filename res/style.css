@@ -1,0 +1,141 @@
+:root { color-scheme: dark; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: 'Lexend', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: #0a0a0a;
+  color: #e6e6e6;
+  font-size: 1.8em;
+}
+
+/* Text Effects */
+.bold { font-weight: 700; }
+
+/* Calm fade-in for lines/inputs (no movement) */
+@keyframes fadeInPlace {
+  from { opacity: 0; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Each "message block" / screen wrapper */
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 0.5rem;
+  opacity: 1;
+  transition: opacity 1.6s ease; /* slow unified fade-out */
+}
+.screen.screen--fading { opacity: 0; }
+
+.message,
+.message-input {
+  opacity: 0;
+  animation: fadeInPlace 1.0s ease forwards;
+  text-align: left;
+  width: min(500px, 90vw);
+}
+
+/* Input look */
+.message-input {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.3rem 0;
+  margin-top: 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #fff;
+  color: #fff;
+  outline: none;
+  caret-color: #fff;
+}
+.message-input::placeholder { color: #aaa; }
+
+/* Compact inline choice buttons (emoji etc.) */
+.choice-row {
+  display: flex;
+  gap: 0.5rem;           /* small gap between buttons */
+  flex-wrap: wrap;
+  align-items: center;
+  width: min(500px, 90vw);
+  margin-top: 1rem;
+
+  /* fade-in like messages */
+  opacity: 0;
+  animation: fadeInPlace 1s ease forwards;
+}
+
+.choice-button {
+  display: inline-block;
+  width: auto;           /* don't stretch full width */
+  min-width: 2.5rem;     /* comfortable touch target */
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #fff;
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Messages viewport: NO smooth scroll, NO padding tricks */
+#messages {
+  position: relative;
+  height: 100svh;
+  width: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 0;
+
+  scrollbar-width: none;        /* Firefox */
+}
+#messages::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+/* Scroll Hint Popup */
+#scroll-hint {
+  position: fixed;
+  top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  z-index: 2000;
+}
+#scroll-hint.show { opacity: 1; }
+
+/* Full-screen background object */
+.bg-svg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  box-shadow: inset 0 0 160px 60px rgba(0,0,0,.6);
+}
+.bg-svg object { width: 100%; height: 100%; display: block; }
+
+/* DEBUG */
+#debug-reset {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: 1px solid #fff;
+  border-radius: 8px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  z-index: 1000;
+  transition: background 0.2s ease;
+}
+#debug-reset:hover { background: rgba(255,255,255,0.25); }

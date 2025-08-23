@@ -1,0 +1,80 @@
+{
+  "firstTime": [
+    { "type": "messages", "key": "intro_first" },
+
+    { "type": "input", "id": "name", "placeholder": "Your name...", "persistKey": "afterName" },
+
+    { "type": "messages", "key": "intro_after_name", "bind": ["name"], "autofade": true },
+
+    { "type": "messages", "key": "intro_ex_prompt" },
+
+    {
+      "type": "rowInput",
+      "id": "ex",
+      "placeholder": "their name...",
+      "skipLabel": "no thanks",
+      "defaultOnSkip": "them",
+      "persistKey": "afterExName"
+    },
+
+    { "type": "branch", "when": "exProvided", "ifTrue": "afterProvided", "ifFalse": "afterSkipped" }
+  ],
+
+  "afterProvided": [
+    { "type": "messages", "key": "intro_ex_provided", "autofade": true },
+    { "type": "goto", "to": "askEndDate" }
+  ],
+
+  "afterSkipped": [
+    { "type": "messages", "key": "intro_ex_skipped", "autofade": true },
+    { "type": "goto", "to": "askEndDate" }
+  ],
+
+  "askEndDate": [
+    { "type": "messages", "key": "end_date_intro" },
+    { "type": "dateInput", "id": "endDate", "persistKey": "afterEndDate" },
+    { "type": "messages", "key": "post_date_next" },
+    {
+      "type": "choice",
+      "id": "nextAction",
+      "options": [
+        { "label": "hear more", "value": "hearMore" },
+        { "label": "let's get started", "value": "start" }
+      ]
+    },
+    { "type": "branch", "when": "nextAction", 
+	  "cases": { 
+		"hearMore": "hearMore", 
+		"start": "returning" 
+	   } 
+	}
+  ],
+
+  "hearMore": [
+    { "type": "messages", "key": "more_info",  "autofade": true},
+	{ "type": "goto", "to": "returning" }
+  ],
+
+  "returning": [
+    { "type": "messages", "key": "intro_returning", "bind": ["name"], "sticky": true },
+	{ "type": "goto", "to": "main_emotion_check" }
+  ],
+  
+  "main_emotion_check": [
+    { "type": "messages", "key": "main_emotion_check" },
+
+    {
+      "type": "choice",
+      "id": "mood",
+      "persistKey": "afterMood",
+      "options": [
+        { "label": "😊", "value": "😊" },
+        { "label": "😑", "value": "😑" },
+        { "label": "😔", "value": "😔" },
+        { "label": "😭", "value": "😭" },
+        { "label": "😡", "value": "😡" }
+      ]
+    }
+  ]
+}
+

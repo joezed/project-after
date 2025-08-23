@@ -1,0 +1,64 @@
+{
+	"intro_first": [
+		"hey",
+		"welcome to after.",
+		"we're glad you're here.",
+		"don't think we've met before...",
+		"who are we speaking to?"
+	],
+	
+	"intro_after_name": [
+		"nice to meet you, {name}",
+		"we know you probably didn't want to be here...",
+		"but here you are, so let us help",
+		"you should be so proud you've made this step"
+	],
+	
+	"intro_ex_prompt": [
+		"to really personalise your experience, it might help to know the other person",
+		"you don't have to, {name}, but we promise this is private to you",
+		"if you'd like to tell us, tell us now"
+	],
+	
+	"intro_ex_provided": [
+		"thanks, that was brave, we're proud of you"
+	],
+	
+	"intro_ex_skipped": [
+		"hey, that's fine. we get it's hard",
+		"we're not here to judge, just help, we hope"
+	],
+	
+	  "end_date_intro": [
+		"it can sometimes help to know how far you've come",
+		"please give us a date when you and {ex} broke up"
+	],
+	  "post_date_next": [
+		"this will help you realise how well you're doing",
+		"day 0 or day 100, it helps to know everything is now behind you",
+		"do you want to hear more about what 'after' is all about?",
+		"or would you rather get straight into it"
+	  ],
+	  
+	  "more_info": [
+		"after is designed to be deleted, {name}",
+		"we want to be so good, you don't need us eventually",
+		"if you use us for a few days, or a few months, or longer, we don't actually care",
+		"we'd rather you get over this break up in the best way possible for you",
+		"using journalling, emotion tracking, articles and more, we want you to heal and build, and come out from this...",
+		"stronger",
+		"happier",
+		"healed",
+		"sound good to you?",
+		"let's get started :)"
+	  ],
+	  
+	"intro_returning": [
+		"hey, {name}",
+		"welcome back to after."
+	],
+	
+	"main_emotion_check": [
+		"how's it going today?"
+	]
+}
