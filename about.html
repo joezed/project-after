@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>after — welcome</title>
+  <link rel="stylesheet" href="res/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+  
+	body {
+	  font-family: 'Lexend', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+	}
+    .about-wrap {
+      position: fixed; inset: 0; z-index: 1;
+      display: flex; align-items: center; justify-content: center;
+      padding: 2rem;
+    }
+    .about-card {
+      max-width: 600px;
+      text-align: left;
+      display: flex; flex-direction: column;
+      gap: 1rem;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+    .about-btn {
+      margin-top: 1rem;
+      border: 1px solid #fff;
+      background: transparent;
+      color: #fff;
+      border-radius: 12px;
+      padding: .6rem 1.1rem;
+      font-size: 1rem;
+      cursor: pointer;
+      width: fit-content;
+      transition: background .2s ease, transform .05s ease;
+    }
+    .about-btn:hover { background: rgba(255,255,255,.12); }
+    .about-btn:active { transform: translateY(1px); }
+  </style>
+</head>
+<body>
+  <!-- Same background as app/landing -->
+  <div class="bg-svg" aria-hidden="true">
+    <object data="res/bg.svg" type="image/svg+xml"></object>
+  </div>
+
+  <div class="about-wrap">
+    <div class="about-card">
+      <p>after is a little space just for you.</p>
+      <p>it’s here when a breakup feels heavy.</p>
+      <p>we help you track your feelings, jot down thoughts, and notice progress.</p>
+      <p>sometimes it’s just about getting it out of your head.</p>
+      <p>sometimes it’s about realising how far you’ve come.</p>
+      <p>we don’t want you forever. we want you better.</p>
+      <p>stronger. calmer. ready for what’s next.</p>
+      <a href="index.html"><button class="about-btn">back</button></a>
+    </div>
+  </div>
+</body>
+</html>

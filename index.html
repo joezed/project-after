@@ -1,25 +1,49 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>after</title>
+  <title>after — welcome</title>
   <link rel="stylesheet" href="res/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <script src="res/script.js"></script>
+  <style>
+    /* Landing-only helpers (kept inline so app CSS stays untouched) */
+    .landing-wrap {
+      position: fixed; inset: 0; z-index: 1;
+      display: flex; align-items: center; justify-content: center;
+      padding: 2rem;
+    }
+    .landing-card {
+      display: inline-block;
+      text-align: center;
+    }
+    .landing-logo {
+      width: min(320px, 60vw); height: auto; display: block;
+      filter: drop-shadow(0 6px 24px rgba(0,0,0,.6));
+    }
+    .landing-title { font-size: 1.2rem; opacity: 0.9; }
+    .landing-btn {
+      margin-top: .5rem;
+      border: 1px solid #fff; background: transparent; color: #fff;
+      border-radius: 12px; padding: .6rem 1.1rem; font-size: 1rem; cursor: pointer;
+      transition: background .2s ease, transform .05s ease;
+    }
+    .landing-btn:hover { background: rgba(255,255,255,.12); }
+    .landing-btn:active { transform: translateY(1px); }
+  </style>
 </head>
 <body>
-  <!-- Load Background -->
+  <!-- Same background as the app -->
   <div class="bg-svg" aria-hidden="true">
     <object data="res/bg.svg" type="image/svg+xml"></object>
   </div>
 
-  <main id="messages"></main>
-  <div id="scroll-hint">pssst, you can still scroll up if you want</div>
-
-  <!-- DEBUG AREA TBD -->
-  <button id="debug-reset">Reset</button>
-
-  <!-- Load script ONCE at end -->
-
+  <div class="landing-wrap">
+    <div class="landing-card">
+      <img class="landing-logo" src="res/graphics/logo-white-noback.png" alt="after logo" />
+      <div class="landing-title">welcome to after</div><br>
+      <a href="app.html"><button class="landing-btn">launch</button></a> <a href="about.html"><button class="landing-btn">find out more</button></a>
+    </div>
+  </div>
 </body>
 </html>

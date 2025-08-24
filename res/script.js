@@ -6,7 +6,7 @@
   /* ===========================
      CONFIG
      =========================== */
-  const STAGGER_MS = 900;            // gap between lines starting
+  const STAGGER_MS = 1500;          // (Doubled) gap between lines starting
   const HOLD_AFTER_SCREEN_MS = 2000; // 2s hold before fade
   const SCREEN_FADE_MS = 1600;       // match .screen transition
   const LINE_FADEIN_MS = 1000;       // match CSS keyframe duration
@@ -29,16 +29,16 @@
       this.currentScreen = screen;
       return screen;
     }
-    appendLine(text, index = 0) {
-      if (!this.currentScreen) this.startScreen();
-      const el = document.createElement("p");
-      el.className = "message";
-      el.textContent = text;
-      el.style.animationDelay = `${index * (STAGGER_MS / 1000)}s`;
-      this.currentScreen.appendChild(el);
-      this._checkForOverflow();
-      return el;
-    }
+	appendLine(text) {
+	  if (!this.currentScreen) this.startScreen();
+	  const el = document.createElement("p");
+	  el.className = "message";
+	  el.textContent = text;
+	  // remove: el.style.animationDelay = `${index * (STAGGER_MS / 1000)}s`;
+	  this.currentScreen.appendChild(el);
+	  this._checkForOverflow();
+	  return el;
+	}
     appendNode(node, index = 0) {
       if (!this.currentScreen) this.startScreen();
       node.style.animationDelay = `${index * (STAGGER_MS / 1000)}s`;
@@ -82,15 +82,35 @@
     });
   }
 
-  async function loadMessagesInto(manager, key, ctx = {}) {
-    const res = await fetch("res/messages.json");
-    const data = await res.json();
-    let messages = data[key] || [];
-    messages = messages.map(m => renderTextWithCtx(m, ctx));
-    manager.startScreen();
-    messages.forEach((text, i) => manager.appendLine(text, i));
-    await manager.waitForScreenFadeIn(messages.length);
-  }
+  // NEW: sequential message rendering with a typing indicator between lines
+	async function loadMessagesInto(manager, key, ctx = {}) {
+	  const res = await fetch("res/messages.json");
+	  const data = await res.json();
+	  let messages = data[key] || [];
+	  messages = messages.map(m => renderTextWithCtx(m, ctx));
+
+	  manager.startScreen();
+
+	  for (let i = 0; i < messages.length; i++) {
+		// show the real message
+		manager.appendLine(messages[i], 0);
+
+		// if another message is coming, show typing line
+		if (i < messages.length - 1) {
+		  const typingEl = document.createElement("p");
+		  typingEl.className = "message typing";
+		  typingEl.textContent = "...";
+		  manager.appendNode(typingEl, 0);
+
+		  // keep typing on for the stagger window
+		  await wait(STAGGER_MS);
+
+		  // remove typing before next real line
+		  typingEl.remove();
+		}
+	  }
+	}
+
 
   /* ===========================
      UI HELPERS
