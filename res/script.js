@@ -1,159 +1,8 @@
 // Wrap everything so duplicate <script> tags can't double-init
 (() => {
-  /* ===========================
-     JOURNAL LOCAL STORAGE HELPERS
-     =========================== */
-  function getTodayKey() {
-    return new Date().toISOString().slice(0,10);
-  }
-
-  function getJournal() {
-    let arr = [];
-    try {
-      const raw = localStorage.getItem("afterJournal");
-      arr = JSON.parse(raw || "[]");
-      if (!Array.isArray(arr)) arr = [];
-    } catch {
-      arr = [];
-    }
-    return arr;
-  }
-
-  function saveJournal(arr) {
-    if (!Array.isArray(arr)) arr = [];
-    try {
-      localStorage.setItem("afterJournal", JSON.stringify(arr));
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  // ===== UNIT TESTS FOR HELPERS =====
-  function runJournalHelperTests() {
-    // Test getTodayKey()
-    const today = getTodayKey();
-    console.assert(/^\d{4}-\d{2}-\d{2}$/.test(today), "getTodayKey format");
-
-    // Test getJournal() with valid data
-    localStorage.setItem("afterJournal", JSON.stringify([{date: today, text: "hi"}]));
-    let arr = getJournal();
-    console.assert(Array.isArray(arr) && arr.length === 1 && arr[0].date === today, "getJournal valid");
-
-    // Test getJournal() with corrupt data
-    localStorage.setItem("afterJournal", "not a json");
-    arr = getJournal();
-    console.assert(Array.isArray(arr) && arr.length === 0, "getJournal corrupt");
-
-    // Test saveJournal()
-    const ok = saveJournal([{date: today, text: "test"}]);
-    console.assert(ok, "saveJournal success");
-    // Test saveJournal() with non-array
-    const ok2 = saveJournal("bad");
-    console.assert(ok2, "saveJournal handles non-array");
-    // Test saveJournal() with array
-    const ok3 = saveJournal([]);
-    console.assert(ok3, "saveJournal handles empty array");
-    // Clean up
-    localStorage.removeItem("afterJournal");
-    // Log for manual check
-    console.log("Journal helper tests complete");
-  }
-  // Uncomment to run tests:
-  // runJournalHelperTests();
   if (window.__AFTER_INIT__) return;
   window.__AFTER_INIT__ = true;
 
-    /* ===========================
-       AFTER JOURNAL FEATURE
-       =========================== */
-    function showAfterJournalUI() {
-      // Create container
-      let journalSection = document.getElementById("after-journal-section");
-      if (!journalSection) {
-        journalSection = document.createElement("section");
-        journalSection.id = "after-journal-section";
-        journalSection.style.margin = "2rem auto";
-        journalSection.style.maxWidth = "500px";
-        journalSection.style.background = "#222";
-        journalSection.style.padding = "1rem";
-        journalSection.style.borderRadius = "1rem";
-        journalSection.style.boxShadow = "0 2px 8px #0002";
-        document.body.appendChild(journalSection);
-      }
-      journalSection.innerHTML = `
-        <h2 style="margin-top:0">Journal</h2>
-        <label style="display:block;margin-bottom:0.5rem;">Date: <input type="date" id="after-journal-date" style="margin-left:0.5rem;" /></label>
-        <textarea id="after-journal-text" rows="4" style="width:100%;margin-bottom:0.5rem;resize:vertical;"></textarea>
-        <button id="after-journal-save" style="width:100%;padding:0.5rem 0;font-weight:bold;">Save</button>
-        <div id="after-journal-confirm" style="margin-top:0.5rem;color:#4caf50;font-weight:bold;display:none;">Saved!</div>
-        <div id="after-journal-list" style="margin-top:2rem;"></div>
-      `;
-      // Set default date to today
-      const dateInput = journalSection.querySelector("#after-journal-date");
-      dateInput.value = new Date().toISOString().slice(0,10);
-      // Save handler
-      const saveBtn = journalSection.querySelector("#after-journal-save");
-      const textArea = journalSection.querySelector("#after-journal-text");
-      const confirmDiv = journalSection.querySelector("#after-journal-confirm");
-      const listDiv = journalSection.querySelector("#after-journal-list");
-
-      function renderJournalList() {
-        let arr = [];
-        try { arr = JSON.parse(localStorage.getItem("afterJournal") || "[]"); } catch {}
-        if (!Array.isArray(arr)) arr = [];
-        // Sort reverse-chronological
-        arr.sort((a, b) => b.date.localeCompare(a.date));
-        // Limit to 200 entries
-        const entries = arr.slice(0, 200);
-        let html = `<h3 style='margin-bottom:0.5rem;'>Your Entries</h3>`;
-        if (entries.length === 0) {
-          html += `<div style='color:#aaa;'>No journal entries yet.</div>`;
-        } else {
-          html += `<ul style='list-style:none;padding:0;margin:0;'>`;
-          for (const entry of entries) {
-            // Show date and first line (truncate to 80 chars)
-            const firstLine = entry.text.split("\n")[0].slice(0,80);
-            html += `<li style='margin-bottom:0.7rem;padding-bottom:0.7rem;border-bottom:1px solid #333;'>
-              <span style='font-weight:bold;'>${entry.date}</span><br>
-              <span style='color:#ccc;'>${firstLine}${entry.text.length>80?"...":""}</span>
-            </li>`;
-          }
-          html += `</ul>`;
-        }
-        listDiv.innerHTML = html;
-      }
-
-      // Initial render
-      renderJournalList();
-
-      saveBtn.onclick = () => {
-        const date = dateInput.value;
-        const text = textArea.value.trim();
-        if (!date || !text) {
-          confirmDiv.textContent = "Cannot save empty entry.";
-          confirmDiv.style.color = "#f44336";
-          confirmDiv.style.display = "block";
-          setTimeout(() => { confirmDiv.style.display = "none"; }, 2000);
-          return;
-        }
-        // Load journal array
-        let arr = [];
-        try {
-          arr = JSON.parse(localStorage.getItem("afterJournal") || "[]");
-        } catch {}
-        // Remove any existing entry for this date
-        arr = arr.filter(e => e.date !== date);
-        // Add new entry
-        arr.push({date, text});
-        localStorage.setItem("afterJournal", JSON.stringify(arr));
-        confirmDiv.textContent = "Saved!";
-        confirmDiv.style.color = "#4caf50";
-        confirmDiv.style.display = "block";
-        setTimeout(() => { confirmDiv.style.display = "none"; }, 1500);
-        renderJournalList();
-      };
-    }
   /* ===========================
      CONFIG
      =========================== */
@@ -509,49 +358,6 @@
 
   /* ===========================
      INIT
-
-          async promptJournal(date) {
-            // Show a message and textarea for journal entry
-            const mgr = this.mgr;
-            mgr.startScreen();
-            mgr.appendLine("Would you like to journal something for today?");
-            // Create textarea and save button
-            const row = document.createElement("div");
-            row.style.display = "flex";
-            row.style.flexDirection = "column";
-            row.style.gap = "0.5rem";
-            row.style.marginTop = "1rem";
-            row.style.width = "min(500px, 90vw)";
-            const textArea = document.createElement("textarea");
-            textArea.rows = 3;
-            textArea.placeholder = "Write your thoughts...";
-            textArea.className = "message-input";
-            const saveBtn = document.createElement("button");
-            saveBtn.textContent = "Save Journal";
-            saveBtn.className = "message-input";
-            saveBtn.style.border = "1px solid #fff";
-            saveBtn.style.padding = "0.3rem 0.6rem";
-            saveBtn.style.cursor = "pointer";
-            row.appendChild(textArea);
-            row.appendChild(saveBtn);
-            mgr.appendNode(row, 0);
-            textArea.focus();
-            await new Promise(resolve => {
-              saveBtn.onclick = () => {
-                const text = textArea.value.trim();
-                if (!text) return;
-                let arr = [];
-                try { arr = JSON.parse(localStorage.getItem("afterJournal") || "[]"); } catch {}
-                arr = arr.filter(e => e.date !== date);
-                arr.push({date, text});
-                localStorage.setItem("afterJournal", JSON.stringify(arr));
-                saveBtn.disabled = true;
-                textArea.disabled = true;
-                resolve();
-              };
-            });
-            await mgr.fadeOutAndClear();
-          }
      =========================== */
   document.addEventListener("DOMContentLoaded", async () => {
     // Reset
@@ -586,8 +392,5 @@
     // Choose entry flow
     const entry = storedName ? "returning" : "firstTime";
     await runner.run(entry);
-
-  // Show afterJournal UI
-  showAfterJournalUI();
   });
 })();
