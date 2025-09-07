@@ -1,154 +1,231 @@
-:root { color-scheme: dark; }
-html, body { height: 100%; }
-body {
+/* ============================================================
+   After — Base layout (additions for Release 0.2)
+   ============================================================ */
+
+:root {
+  --bg: #0b0f14;
+  --bg-elev: #111a;
+  --text: #ffffff;
+  --muted: #b7c0cd;
+  --border: rgba(255,255,255,0.12);
+  --accent: #5b8cff;
+  --danger: #ff6b6b;
+}
+
+/* Basic shell */
+html, body {
   margin: 0;
-  font-family: 'Lexend', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  background: #0a0a0a;
-  color: #e6e6e6;
-  font-size: 1.8em;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  height: 100%;
 }
 
-/* Text Effects */
-.bold { font-weight: 700; }
-
-/* Calm fade-in for lines/inputs (no movement) */
-@keyframes fadeInPlace {
-  from { opacity: 0; transform: translateY(0); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Typing indicator gentle pulse */
-@keyframes typingBlink {
-  0%   { opacity: .35; }
-  50%  { opacity: 1; }
-  100% { opacity: .35; }
-}
-
-/* Each "message block" / screen wrapper */
-.screen {
+.app-header {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  width: 100%;
-  gap: 0.5rem;
-  opacity: 1;
-  transition: opacity 1.6s ease; /* slow unified fade-out */
-}
-.screen.screen--fading { opacity: 0; }
-
-.message,
-.message-input {
-  opacity: 0;
-  animation: fadeInPlace 1.0s ease forwards;
-  text-align: left;
-  width: min(500px, 90vw);
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(8px);
+  background: rgba(11, 15, 20, 0.65);
+  z-index: 10;
 }
 
-/* Typing line ("...") styling */
-.message.typing {
-  letter-spacing: 0.2em;
-  animation: fadeInPlace 0.4s ease forwards, typingBlink 1.2s ease-in-out infinite;
+.app-logo {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
-/* Input look */
-.message-input {
-  font-family: inherit;
-  font-size: 1rem;
-  padding: 0.3rem 0;
-  margin-top: 1rem;
+.app-header-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.app-root {
+  min-height: calc(100vh - 56px);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.conversation {
+  width: min(820px, 92vw);
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.btn:hover { filter: brightness(1.06); }
+.btn:active { transform: translateY(1px); }
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-ghost {
   background: transparent;
-  border: none;
-  border-bottom: 2px solid #fff;
+}
+
+.btn-danger {
+  background: transparent;
+  border-color: color-mix(in oklab, var(--danger), white 10%);
+  color: color-mix(in oklab, var(--danger), white 10%);
+}
+
+.small { font-size: 0.9rem; padding: 7px 10px; border-radius: 8px; }
+.xsmall { font-size: 0.8rem; padding: 5px 8px; border-radius: 8px; }
+
+/* Muted text */
+.muted { color: var(--muted); }
+
+/* ===== Daily Journal Prompt ===== */
+.journal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: grid; place-items: center;
+  z-index: 9999;
+}
+
+.journal-overlay.hidden { display: none; }
+
+.journal-modal {
+  width: min(680px, 92vw);
+  background: var(--bg-elev);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  color: var(--text);
+}
+
+.journal-title { margin: 0 0 6px; font-size: 1.2rem; }
+.journal-subtitle { margin: 0 0 12px; color: var(--muted); }
+
+.journal-textarea {
+  width: 100%; resize: vertical;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.35);
   color: #fff;
   outline: none;
-  caret-color: #fff;
-}
-.message-input::placeholder { color: #aaa; }
-
-/* Compact inline choice buttons (emoji etc.) */
-.choice-row {
-  display: flex;
-  gap: 0.5rem;           /* small gap between buttons */
-  flex-wrap: wrap;
-  align-items: center;
-  width: min(500px, 90vw);
-  margin-top: 1rem;
-
-  /* fade-in like messages */
-  opacity: 0;
-  animation: fadeInPlace 1s ease forwards;
+  min-height: 120px;
 }
 
-.choice-button {
-  display: inline-block;
-  width: auto;           /* don't stretch full width */
-  min-width: 2.5rem;     /* comfortable touch target */
-  padding: 0.35rem 0.6rem;
-  border: 1px solid #fff;
-  border-radius: 8px;
-  background: transparent;
-  color: #fff;
-  cursor: pointer;
-  font-size: 1rem;
+.journal-textarea:focus {
+  border-color: rgba(255,255,255,0.35);
 }
 
-/* Messages viewport: NO smooth scroll, NO padding tricks */
-#messages {
-  position: relative;
-  height: 100svh;
-  width: 100%;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 0;
-
-  scrollbar-width: none;        /* Firefox */
+.journal-actions {
+  margin-top: 12px;
+  display: flex; gap: 10px; flex-wrap: wrap;
 }
-#messages::-webkit-scrollbar { display: none; } /* Chrome/Safari */
 
-/* Scroll Hint Popup */
-#scroll-hint {
-  position: fixed;
-  top: 0.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255,255,255,0.1);
-  color: #fff;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.5s ease;
-  z-index: 2000;
+.journal-notice {
+  margin-top: 10px;
+  min-height: 1.2em;
+  font-size: 0.95rem;
+  color: #b9ffb2; /* success green */
 }
-#scroll-hint.show { opacity: 1; }
 
-/* Full-screen background object */
-.bg-svg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
+/* ===== Journal List Screen ===== */
+.journal-list-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: grid; place-items: center;
+  z-index: 9998;
+}
+
+.journal-list-overlay.hidden { display: none; }
+
+.journal-list-modal {
+  width: min(860px, 94vw);
+  max-height: min(80vh, 900px);
   overflow: hidden;
-  box-shadow: inset 0 0 160px 60px rgba(0,0,0,.6);
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 10px;
+  background: var(--bg-elev);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  color: var(--text);
 }
-.bg-svg object { width: 100%; height: 100%; display: block; }
 
-/* DEBUG */
-#debug-reset {
-  position: fixed;
-  bottom: 1rem;
-  right: 1rem;
-  background: rgba(255,255,255,0.1);
-  color: #fff;
-  border: 1px solid #fff;
-  border-radius: 8px;
-  padding: 0.3rem 0.6rem;
-  font-size: 0.8rem;
-  cursor: pointer;
-  z-index: 1000;
-  transition: background 0.2s ease;
+.journal-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-#debug-reset:hover { background: rgba(255,255,255,0.25); }
+
+.journal-list-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+  color: var(--muted);
+  padding: 4px 0 0;
+  border-top: 1px dashed var(--border);
+}
+
+.journal-list {
+  overflow: auto;
+  padding: 4px 2px 8px;
+  display: grid;
+  gap: 10px;
+}
+
+.journal-empty {
+  padding: 10px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+.journal-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255,255,255,0.03);
+}
+
+.journal-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.journal-item-date {
+  font-weight: 600;
+}
+
+.journal-item-text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Scrollbars (nice-to-have) */
+.journal-list::-webkit-scrollbar { width: 10px; }
+.journal-list::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 10px;
+}

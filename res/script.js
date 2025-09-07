@@ -13,6 +13,201 @@
   const wait = (ms) => new Promise(r => setTimeout(r, ms));
 
   /* ===========================
+     JOURNAL (Release 0.2)
+     =========================== */
+  const JOURNAL_KEY = 'afterJournal';
+
+  function getTodayKey() {
+    const d = new Date();
+    return d.toISOString().slice(0, 10); // "YYYY-MM-DD"
+  }
+
+  function getJournal() {
+    try {
+      const raw = localStorage.getItem(JOURNAL_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function hasTodayEntry() {
+    const today = getTodayKey();
+    return getJournal().some(e => e.date === today);
+  }
+
+  function saveJournalEntry(text) {
+    const trimmed = (text || '').trim();
+    if (!trimmed) return { ok: false, reason: 'empty' };
+
+    const today = getTodayKey();
+    const journal = getJournal().filter(e => e.date !== today); // de-dup per day
+    journal.push({ date: today, text: trimmed });
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
+    return { ok: true };
+  }
+
+  function clearJournal() {
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify([]));
+  }
+
+  function formatDate(iso) {
+    const d = new Date(iso + 'T00:00:00Z');
+    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  // Prompt overlay (appears after mood is logged)
+  function openJournalPrompt() {
+    if (hasTodayEntry()) return; // skip if already saved today
+
+    const overlay = document.getElementById('journal-overlay');
+    const textarea = document.getElementById('journal-textarea');
+    const confirm = document.getElementById('journal-submit');
+    const skip = document.getElementById('journal-skip');
+    const notice = document.getElementById('journal-notice');
+
+    if (!overlay || !textarea || !confirm || !skip || !notice) return;
+    textarea.value = '';
+    notice.textContent = '';
+    overlay.classList.remove('hidden');
+
+    confirm.onclick = () => {
+      const res = saveJournalEntry(textarea.value);
+      if (!res.ok) {
+        notice.textContent = 'Please write something or choose "not today".';
+        return;
+      }
+      notice.textContent = 'Saved ✓';
+      setTimeout(() => closeJournalPrompt(), 600);
+    };
+
+    skip.onclick = () => {
+      closeJournalPrompt();
+    };
+
+    const onKey = (e) => (e.key === 'Escape' ? closeJournalPrompt() : null);
+    overlay.addEventListener('keydown', onKey, { once: true });
+    textarea.focus();
+  }
+
+  function closeJournalPrompt() {
+    const overlay = document.getElementById('journal-overlay');
+    if (overlay) overlay.classList.add('hidden');
+  }
+
+  // Journal list overlay
+  function openJournalList() {
+    const overlay = document.getElementById('journal-list-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+    renderJournalList();
+  }
+
+  function closeJournalList() {
+    const overlay = document.getElementById('journal-list-overlay');
+    if (overlay) overlay.classList.add('hidden');
+  }
+
+  function renderJournalList() {
+    const listEl = document.getElementById('journal-list');
+    const countEl = document.getElementById('journal-count');
+    if (!listEl || !countEl) return;
+
+    const items = getJournal().slice().sort((a, b) => (a.date < b.date ? 1 : -1)); // reverse-chronological
+    countEl.textContent = `${items.length} entr${items.length === 1 ? 'y' : 'ies'}`;
+
+    const frag = document.createDocumentFragment();
+
+    if (items.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'journal-empty muted';
+      empty.textContent = "No entries yet. You'll be prompted after logging your mood.";
+      frag.appendChild(empty);
+    } else {
+      for (const { date, text } of items) {
+        const row = document.createElement('article');
+        row.className = 'journal-item';
+        row.setAttribute('role', 'listitem');
+
+        const h = document.createElement('header');
+        h.className = 'journal-item-head';
+
+        const d = document.createElement('div');
+        d.className = 'journal-item-date';
+        d.textContent = formatDate(date);
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'btn btn-ghost xsmall';
+        copyBtn.textContent = 'Copy';
+        copyBtn.title = 'Copy entry text';
+        copyBtn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(text);
+            copyBtn.textContent = 'Copied ✓';
+            setTimeout(() => (copyBtn.textContent = 'Copy'), 800);
+          } catch {}
+        });
+
+        h.appendChild(d);
+        h.appendChild(copyBtn);
+
+        const body = document.createElement('p');
+        body.className = 'journal-item-text';
+        const preview = text.length > 240 ? text.slice(0, 240) + '…' : text;
+        body.textContent = preview;
+        body.title = text;
+
+        row.appendChild(h);
+        row.appendChild(body);
+        frag.appendChild(row);
+      }
+    }
+
+    listEl.innerHTML = '';
+    listEl.appendChild(frag);
+  }
+
+  function exportJournal() {
+    const data = getJournal().slice().sort((a, b) => (a.date < b.date ? 1 : -1));
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'after-journal.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function wireJournalUI() {
+    const openBtn = document.getElementById('journal-open');
+    const closeBtn = document.getElementById('journal-close');
+    const exportBtn = document.getElementById('journal-export');
+    const clearBtn = document.getElementById('journal-clear');
+    const overlay = document.getElementById('journal-list-overlay');
+
+    openBtn?.addEventListener('click', openJournalList);
+    closeBtn?.addEventListener('click', closeJournalList);
+    exportBtn?.addEventListener('click', exportJournal);
+    clearBtn?.addEventListener('click', () => {
+      if (confirm('Delete all journal entries?')) {
+        clearJournal();
+        renderJournalList();
+      }
+    });
+    overlay?.addEventListener('click', (e) => {
+      if (e.target === overlay) closeJournalList();
+    });
+  }
+
+  // convenience so other code can trigger the prompt
+  function onDailyMoodLogged() {
+    openJournalPrompt();
+  }
+
+  /* ===========================
      SCREEN MANAGER
      =========================== */
   class ScreenManager {
@@ -29,16 +224,15 @@
       this.currentScreen = screen;
       return screen;
     }
-	appendLine(text) {
-	  if (!this.currentScreen) this.startScreen();
-	  const el = document.createElement("p");
-	  el.className = "message";
-	  el.textContent = text;
-	  // remove: el.style.animationDelay = `${index * (STAGGER_MS / 1000)}s`;
-	  this.currentScreen.appendChild(el);
-	  this._checkForOverflow();
-	  return el;
-	}
+    appendLine(text) {
+      if (!this.currentScreen) this.startScreen();
+      const el = document.createElement("p");
+      el.className = "message";
+      el.textContent = text;
+      this.currentScreen.appendChild(el);
+      this._checkForOverflow();
+      return el;
+    }
     appendNode(node, index = 0) {
       if (!this.currentScreen) this.startScreen();
       node.style.animationDelay = `${index * (STAGGER_MS / 1000)}s`;
@@ -82,35 +276,34 @@
     });
   }
 
-  // NEW: sequential message rendering with a typing indicator between lines
-	async function loadMessagesInto(manager, key, ctx = {}) {
-	  const res = await fetch("res/messages.json");
-	  const data = await res.json();
-	  let messages = data[key] || [];
-	  messages = messages.map(m => renderTextWithCtx(m, ctx));
+  // Sequential message rendering with a typing indicator between lines
+  async function loadMessagesInto(manager, key, ctx = {}) {
+    const res = await fetch("res/messages.json");
+    const data = await res.json();
+    let messages = data[key] || [];
+    messages = messages.map(m => renderTextWithCtx(m, ctx));
 
-	  manager.startScreen();
+    manager.startScreen();
 
-	  for (let i = 0; i < messages.length; i++) {
-		// show the real message
-		manager.appendLine(messages[i], 0);
+    for (let i = 0; i < messages.length; i++) {
+      // show the real message
+      manager.appendLine(messages[i], 0);
 
-		// if another message is coming, show typing line
-		if (i < messages.length - 1) {
-		  const typingEl = document.createElement("p");
-		  typingEl.className = "message typing";
-		  typingEl.textContent = "...";
-		  manager.appendNode(typingEl, 0);
+      // if another message is coming, show typing line
+      if (i < messages.length - 1) {
+        const typingEl = document.createElement("p");
+        typingEl.className = "message typing";
+        typingEl.textContent = "...";
+        manager.appendNode(typingEl, 0);
 
-		  // keep typing on for the stagger window
-		  await wait(STAGGER_MS);
+        // keep typing on for the stagger window
+        await wait(STAGGER_MS);
 
-		  // remove typing before next real line
-		  typingEl.remove();
-		}
-	  }
-	}
-
+        // remove typing before next real line
+        typingEl.remove();
+      }
+    }
+  }
 
   /* ===========================
      UI HELPERS
@@ -318,7 +511,14 @@
       if (node.type === "choice") {
         const picked = await ui.choice(this.mgr, node.options || []);
         this.ctx[node.id] = picked;
-        if (node.persistKey) localStorage.setItem(node.persistKey, picked);
+        if (node.persistKey) {
+          localStorage.setItem(node.persistKey, picked);
+
+          // If this is the daily mood save, fire the journal prompt
+          if (node.persistKey === 'afterMood') {
+            onDailyMoodLogged();
+          }
+        }
         await this.mgr.fadeOutAndClear();
         return;
       }
@@ -357,9 +557,43 @@
   }
 
   /* ===========================
+     CUSTOM ACTIONS (optional)
+     =========================== */
+  function dispatchCustomAction(name) {
+    switch (name) {
+      case 'open_journal':
+        openJournalList();
+        break;
+      case 'export_journal':
+        exportJournal();
+        break;
+      case 'clear_journal':
+        if (confirm('Delete all journal entries?')) {
+          clearJournal();
+          renderJournalList();
+        }
+        break;
+      default:
+        console.warn('Unknown custom action:', name);
+    }
+  }
+  // If your flow engine emits action strings like "custom:open_journal"
+  window.onFlowAction = function(action) {
+    if (typeof action !== 'string') return;
+    if (action.startsWith('custom:')) {
+      dispatchCustomAction(action.split(':', 2)[1]);
+      return;
+    }
+    // otherwise, your engine should handle built-ins like "next:screenId"
+  };
+
+  /* ===========================
      INIT
      =========================== */
   document.addEventListener("DOMContentLoaded", async () => {
+    // hook up Journal header/overlay controls (if present in app.html)
+    wireJournalUI();
+
     // Reset
     const resetBtn = document.getElementById("debug-reset");
     if (resetBtn) {
@@ -369,6 +603,8 @@
           localStorage.removeItem("afterExName");
           localStorage.removeItem("afterEndDate");
           localStorage.removeItem("afterMood");
+          // keep journal by default; comment-in to nuke:
+          // localStorage.removeItem(JOURNAL_KEY);
         } finally {
           location.reload();
         }

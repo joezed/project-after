@@ -1,29 +1,67 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>after — let's do this</title>
-  <link rel="stylesheet" href="res/style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <script src="res/script.js"></script>
-  <link rel="apple-touch-icon" sizes="180x180" href="res/favicon/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="res/favicon/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="res/favicon/favicon-16x16.png">
-  <link rel="manifest" href="res/favicon/site.webmanifest">
-  <link rel="icon" href="res/favicon/favicon.ico">
-
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>After — App</title>
+  <link rel="icon" href="res/favicon/favicon.ico" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Load Background -->
-  <div class="bg-svg" aria-hidden="true">
-    <object data="res/bg.svg" type="image/svg+xml"></object>
+  <!-- App shell -->
+  <header class="app-header">
+    <div class="app-header-left">
+      <a class="app-logo" href="index.html">after</a>
+    </div>
+    <nav class="app-header-right">
+      <button id="journal-open" class="btn btn-ghost small">Journal</button>
+      <a class="btn btn-ghost small" href="about.html">About</a>
+    </nav>
+  </header>
+
+  <main id="app-root" class="app-root" role="main" aria-live="polite">
+    <!-- Your conversation UI mounts/renders here via script.js -->
+    <div id="conversation" class="conversation"></div>
+  </main>
+
+  <!-- ===== Daily Journal Prompt (appears after mood is logged) ===== -->
+  <div id="journal-overlay" class="journal-overlay hidden" aria-hidden="true">
+    <div class="journal-modal" role="dialog" aria-modal="true" aria-labelledby="journal-title">
+      <h2 id="journal-title" class="journal-title">Want to jot down a few lines today?</h2>
+      <p class="journal-subtitle">Totally optional. Share a quick thought if you like.</p>
+
+      <textarea id="journal-textarea" class="journal-textarea" rows="5" placeholder="Write a short entry for today..."></textarea>
+
+      <div class="journal-actions">
+        <button id="journal-submit" class="btn btn-primary">submit</button>
+        <button id="journal-skip" class="btn btn-ghost">not today</button>
+      </div>
+
+      <div id="journal-notice" class="journal-notice" aria-live="polite"></div>
+    </div>
   </div>
 
-  <main id="messages"></main>
-  <div id="scroll-hint">pssst, you can still scroll up if you want</div>
+  <!-- ===== Journal List Screen (QA + user browsing) ===== -->
+  <div id="journal-list-overlay" class="journal-list-overlay hidden" aria-hidden="true">
+    <div class="journal-list-modal" role="dialog" aria-modal="true" aria-labelledby="journal-list-title">
+      <div class="journal-list-head">
+        <h2 id="journal-list-title" class="journal-title">Your Journal</h2>
+        <button id="journal-close" class="btn btn-ghost small" aria-label="Close Journal">Close</button>
+      </div>
 
-  <!-- DEBUG AREA TBD -->
-  <button id="debug-reset">Reset</button>
+      <div class="journal-list-meta">
+        <span id="journal-count" class="muted"></span>
+        <button id="journal-export" class="btn small" title="Export as JSON">Export</button>
+        <button id="journal-clear" class="btn btn-danger small" title="Delete all entries">Clear</button>
+      </div>
 
+      <div id="journal-list" class="journal-list" role="list"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
