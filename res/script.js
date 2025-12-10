@@ -385,20 +385,39 @@
     ? structuredClone(val)
     : JSON.parse(JSON.stringify(val)));
 
-  async function fetchJson(url, fallback) {
+  // Some hosts ship strict CSP rules that block fetching or evaluating local JSON
+  // bundles. To avoid tripping `unsafe-eval` warnings and 404s, we use the
+  // embedded definitions by default and only reach for remote JSON if an opt-in
+  // flag is explicitly set in the page.
+  const USE_REMOTE_JSON = Boolean(document.body?.dataset?.useRemoteJson);
+
+  async function getMessagesData() {
+    if (!USE_REMOTE_JSON) return clone(BUILTIN_MESSAGES);
     try {
-      const res = await fetch(url);
+      const res = await fetch("res/messages.json");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (err) {
-      console.warn(`after: ${url} unavailable, using bundled data`, err);
-      return clone(fallback);
+      console.warn("after: messages.json unavailable, using bundled data", err);
+      return clone(BUILTIN_MESSAGES);
+    }
+  }
+
+  async function getFlowsData() {
+    if (!USE_REMOTE_JSON) return clone(BUILTIN_FLOWS);
+    try {
+      const res = await fetch("res/flows.json");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      console.warn("after: flows.json unavailable, using bundled data", err);
+      return clone(BUILTIN_FLOWS);
     }
   }
 
   // Sequential message rendering with a typing indicator between lines
   async function loadMessagesInto(manager, key, ctx = {}) {
-    const data = await fetchJson("res/messages.json", BUILTIN_MESSAGES);
+    const data = await getMessagesData();
     let messages = data[key] || [];
     messages = messages.map(m => renderTextWithCtx(m, ctx));
 
@@ -573,7 +592,7 @@
 
     async loadFlows() {
       if (this.flows) return this.flows;
-      this.flows = await fetchJson("res/flows.json", BUILTIN_FLOWS);
+      this.flows = await getFlowsData();
       return this.flows;
     }
 
@@ -750,6 +769,14 @@
 
     // Choose entry flow
     const entry = storedName ? "returning" : "firstTime";
-    await runner.run(entry);
+    try {
+      await runner.run(entry);
+    } catch (err) {
+      console.error('after: failed to start conversation flow', err);
+      const fallback = document.createElement('div');
+      fallback.className = 'message error';
+      fallback.textContent = 'We hit a problem starting the conversation. Please refresh and try again.';
+      container.appendChild(fallback);
+    }
   });
 })();
