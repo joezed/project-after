@@ -7,7 +7,7 @@
      CONFIG
      =========================== */
   const STAGGER_MS = 1500;          // (Doubled) gap between lines starting
-  const HOLD_AFTER_SCREEN_MS = 2000; // 2s hold before fade
+  const HOLD_AFTER_SCREEN_MS = 5000; // 5s hold before fade
   const SCREEN_FADE_MS = 1600;       // match .screen transition
   const LINE_FADEIN_MS = 1000;       // match CSS keyframe duration
   const wait = (ms) => new Promise(r => setTimeout(r, ms));
@@ -58,8 +58,24 @@
   }
 
   // Prompt overlay (appears after mood is logged)
+  function showToast(message) {
+    let el = document.getElementById('after-toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'after-toast';
+      el.className = 'toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = message;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3600);
+  }
+
   function openJournalPrompt() {
-    if (hasTodayEntry()) return; // skip if already saved today
+    if (hasTodayEntry()) {
+      showToast("you've already journalled today, come back tomorrow if you need to, we'll be here");
+      return; // skip if already saved today
+    }
 
     const overlay = document.getElementById('journal-overlay');
     const textarea = document.getElementById('journal-textarea');
@@ -224,11 +240,12 @@
       this.currentScreen = screen;
       return screen;
     }
-    appendLine(text) {
+    appendLine(text, index = 0) {
       if (!this.currentScreen) this.startScreen();
       const el = document.createElement("p");
       el.className = "message";
       el.textContent = text;
+      el.style.animationDelay = `${index * (STAGGER_MS / 1000)}s`;
       this.currentScreen.appendChild(el);
       this._checkForOverflow();
       return el;
@@ -425,7 +442,7 @@
 
     for (let i = 0; i < messages.length; i++) {
       // show the real message
-      manager.appendLine(messages[i], 0);
+      manager.appendLine(messages[i], i);
 
       // if another message is coming, show typing line
       if (i < messages.length - 1) {
@@ -588,6 +605,7 @@
       this.mgr = manager;
       this.ctx = {};
       this.flows = null;
+      this.shouldFade = false;
     }
 
     async loadFlows() {
@@ -605,7 +623,7 @@
         }
         await loadMessagesInto(this.mgr, node.key, boundCtx);
         if (node.sticky) return;
-        if (node.autofade) await this.mgr.fadeOutAndClear();
+        if (node.autofade) this.shouldFade = true;
         return;
       }
 
@@ -615,7 +633,7 @@
         this.ctx[node.id] = val;
         if (node.persistKey) localStorage.setItem(node.persistKey, val);
         if (node.id === "name") localStorage.setItem("afterName", val);
-        await this.mgr.fadeOutAndClear();
+        await this.finishScreen(true);
         return;
       }
 
@@ -631,7 +649,7 @@
         this.ctx[`${node.id}Provided`] = !skipped; // e.g., exProvided
         if (node.persistKey) localStorage.setItem(node.persistKey, finalVal);
         if (node.id === "ex") localStorage.setItem("afterExName", finalVal);
-        await this.mgr.fadeOutAndClear();
+        await this.finishScreen(true);
         return;
       }
 
@@ -640,7 +658,7 @@
         const dateStr = await ui.dateInput(this.mgr);
         this.ctx[node.id] = dateStr;
         if (node.persistKey) localStorage.setItem(node.persistKey, dateStr);
-        await this.mgr.fadeOutAndClear();
+        await this.finishScreen(true);
         return;
       }
 
@@ -656,7 +674,7 @@
             onDailyMoodLogged();
           }
         }
-        await this.mgr.fadeOutAndClear();
+        await this.finishScreen(true);
         return;
       }
 
@@ -690,6 +708,12 @@
         }
         i++;
       }
+    }
+
+    async finishScreen(force = false) {
+      if (!force && !this.shouldFade) return;
+      this.shouldFade = false;
+      await this.mgr.fadeOutAndClear();
     }
   }
 
