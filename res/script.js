@@ -269,6 +269,111 @@
   /* ===========================
      TEMPLATE + DATA LOADING
      =========================== */
+  const BUILTIN_MESSAGES = {
+    intro_first: [
+      "hey",
+      "welcome to after.",
+      "we're glad you're here.",
+      "don't think we've met before...",
+      "who are we speaking to?"
+    ],
+    intro_after_name: [
+      "nice to meet you, {name}",
+      "we know you probably didn't want to be here...",
+      "but here you are, so let us help",
+      "you should be so proud you've made this step"
+    ],
+    intro_ex_prompt: [
+      "to really personalise your experience, it might help to know the other person",
+      "you don't have to, {name}, but we promise this is private to you",
+      "if you'd like to tell us, tell us now"
+    ],
+    intro_ex_provided: [
+      "thanks, that was brave, we're proud of you"
+    ],
+    intro_ex_skipped: [
+      "hey, that's fine. we get it's hard",
+      "we're not here to judge, just help, we hope"
+    ],
+    end_date_intro: [
+      "it can sometimes help to know how far you've come",
+      "please give us a date when you and {ex} broke up"
+    ],
+    post_date_next: [
+      "this will help you realise how well you're doing",
+      "day 0 or day 100, it helps to know everything is now behind you",
+      "do you want to hear more about what 'after' is all about?",
+      "or would you rather get straight into it"
+    ],
+    more_info: [
+      "after is designed to be deleted, {name}",
+      "we want to be so good, you don't need us eventually",
+      "if you use us for a few days, or a few months, or longer, we don't actually care",
+      "we'd rather you get over this break up in the best way possible for you",
+      "using journalling, emotion tracking, articles and more, we want you to heal and build, and come out from this...",
+      "stronger",
+      "happier",
+      "healed",
+      "sound good to you?",
+      "let's get started :)"
+    ],
+    intro_returning: [
+      "hey, {name}",
+      "welcome back to after."
+    ],
+    main_emotion_check: [
+      "how's it going today?"
+    ]
+  };
+
+  const BUILTIN_FLOWS = {
+    firstTime: [
+      { type: "messages", key: "intro_first", autofade: true },
+      { type: "input", id: "name", placeholder: "your name", persistKey: "afterName" },
+      { type: "messages", key: "intro_after_name", bind: ["name"], autofade: true },
+      { type: "messages", key: "intro_ex_prompt", bind: ["name"], autofade: true },
+      { type: "rowInput", id: "ex", placeholder: "their name", skipLabel: "skip", defaultOnSkip: "them", persistKey: "afterExName" },
+      { type: "branch", when: "exProvided", ifTrue: "exProvided", ifFalse: "exSkipped" }
+    ],
+    exProvided: [
+      { type: "messages", key: "intro_ex_provided", autofade: true },
+      { type: "goto", to: "collectDate" }
+    ],
+    exSkipped: [
+      { type: "messages", key: "intro_ex_skipped", autofade: true },
+      { type: "goto", to: "collectDate" }
+    ],
+    collectDate: [
+      { type: "messages", key: "end_date_intro", bind: ["ex"], autofade: true },
+      { type: "dateInput", id: "endDate", persistKey: "afterEndDate" },
+      { type: "messages", key: "post_date_next", bind: ["ex"], autofade: true },
+      { type: "goto", to: "moreInfo" }
+    ],
+    moreInfo: [
+      { type: "messages", key: "more_info", bind: ["name"] },
+      { type: "goto", to: "moodCheck" }
+    ],
+    moodCheck: [
+      { type: "messages", key: "main_emotion_check" },
+      {
+        type: "choice",
+        id: "mood",
+        persistKey: "afterMood",
+        options: [
+          { label: "😊", value: "happy" },
+          { label: "😑", value: "neutral" },
+          { label: "😔", value: "down" },
+          { label: "😭", value: "sad" },
+          { label: "😡", value: "angry" }
+        ]
+      }
+    ],
+    returning: [
+      { type: "messages", key: "intro_returning", bind: ["name"], autofade: true },
+      { type: "goto", to: "moodCheck" }
+    ]
+  };
+
   function renderTextWithCtx(text, ctx = {}) {
     return text.replace(/\{(\w+)\}/g, (_, k) => {
       const val = (k in ctx) ? ctx[k] : undefined;
@@ -276,10 +381,24 @@
     });
   }
 
+  const clone = (val) => (typeof structuredClone === 'function'
+    ? structuredClone(val)
+    : JSON.parse(JSON.stringify(val)));
+
+  async function fetchJson(url, fallback) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      console.warn(`after: ${url} unavailable, using bundled data`, err);
+      return clone(fallback);
+    }
+  }
+
   // Sequential message rendering with a typing indicator between lines
   async function loadMessagesInto(manager, key, ctx = {}) {
-    const res = await fetch("res/messages.json");
-    const data = await res.json();
+    const data = await fetchJson("res/messages.json", BUILTIN_MESSAGES);
     let messages = data[key] || [];
     messages = messages.map(m => renderTextWithCtx(m, ctx));
 
@@ -454,8 +573,7 @@
 
     async loadFlows() {
       if (this.flows) return this.flows;
-      const res = await fetch("res/flows.json");
-      this.flows = await res.json();
+      this.flows = await fetchJson("res/flows.json", BUILTIN_FLOWS);
       return this.flows;
     }
 
@@ -611,7 +729,12 @@
       });
     }
 
-    const container = document.getElementById("messages");
+    const container = document.getElementById("messages") || document.getElementById("conversation");
+    if (!container) {
+      console.error("after: conversation container not found (expected #messages or #conversation)");
+      return;
+    }
+
     const mgr = new ScreenManager(container);
     const runner = new FlowRunner(mgr);
 
