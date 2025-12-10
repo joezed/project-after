@@ -611,7 +611,12 @@
       });
     }
 
-    const container = document.getElementById("messages");
+    const container = document.getElementById("messages") || document.getElementById("conversation");
+    if (!container) {
+      console.error("after: conversation container not found (expected #messages or #conversation)");
+      return;
+    }
+
     const mgr = new ScreenManager(container);
     const runner = new FlowRunner(mgr);
 
