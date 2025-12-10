@@ -1,63 +1,53 @@
 {
-  "screens": {
-    "intro": {
-      "messages": [
-        { "type": "text", "text": "welcome back to after 💙" }
-      ],
-      "next": "main_emotion_check"
-    },
+  "firstTime": [
+    { "type": "messages", "key": "intro_first", "autofade": true },
+    { "type": "input", "id": "name", "placeholder": "your name", "persistKey": "afterName" },
+    { "type": "messages", "key": "intro_after_name", "bind": ["name"], "autofade": true },
+    { "type": "messages", "key": "intro_ex_prompt", "bind": ["name"], "autofade": true },
+    { "type": "rowInput", "id": "ex", "placeholder": "their name", "skipLabel": "skip", "defaultOnSkip": "them", "persistKey": "afterExName" },
+    { "type": "branch", "when": "exProvided", "ifTrue": "exProvided", "ifFalse": "exSkipped" }
+  ],
 
-    "main_emotion_check": {
-      "messages": [
-        { "type": "text", "text": "how's it going today?" },
-        { "type": "emoji-buttons", "options": ["😊","😑","😔","😭","😡"], "save": "daily_mood" }
-      ],
-      "next": "post_mood"
-    },
+  "exProvided": [
+    { "type": "messages", "key": "intro_ex_provided", "autofade": true },
+    { "type": "goto", "to": "collectDate" }
+  ],
 
-    "post_mood": {
-      "messages": [
-        { "type": "text", "text": "noted. thanks for sharing." }
-      ],
-      "next": "home"
-    },
+  "exSkipped": [
+    { "type": "messages", "key": "intro_ex_skipped", "autofade": true },
+    { "type": "goto", "to": "collectDate" }
+  ],
 
-    "home": {
-      "messages": [
-        { "type": "text", "text": "want to do anything else?" }
-      ],
-      "buttons": [
-        { "label": "settings", "action": "next:settings" }
-      ]
-    },
+  "collectDate": [
+    { "type": "messages", "key": "end_date_intro", "bind": ["ex"], "autofade": true },
+    { "type": "dateInput", "id": "endDate", "persistKey": "afterEndDate" },
+    { "type": "messages", "key": "post_date_next", "bind": ["ex"], "autofade": true },
+    { "type": "goto", "to": "moreInfo" }
+  ],
 
-    "settings": {
-      "messages": [
-        { "type": "text", "text": "settings" }
-      ],
-      "buttons": [
-        { "label": "open journal",  "action": "custom:open_journal" },
-        { "label": "export journal (.json)", "action": "custom:export_journal" },
-        { "label": "clear journal", "action": "custom:clear_journal", "danger": true },
-        { "label": "back", "action": "next:home" }
-      ]
-    },
+  "moreInfo": [
+    { "type": "messages", "key": "more_info", "bind": ["name"] },
+    { "type": "goto", "to": "moodCheck" }
+  ],
 
-    "journal_hub": {
-      "messages": [
-        { "type": "text", "text": "your journal" },
-        { "type": "text", "text": "view entries, export or clear" }
-      ],
-      "buttons": [
-        { "label": "open journal",  "action": "custom:open_journal" },
-        { "label": "export journal (.json)", "action": "custom:export_journal" },
-        { "label": "clear journal", "action": "custom:clear_journal", "danger": true },
-        { "label": "back", "action": "next:home" }
+  "moodCheck": [
+    { "type": "messages", "key": "main_emotion_check" },
+    {
+      "type": "choice",
+      "id": "mood",
+      "persistKey": "afterMood",
+      "options": [
+        { "label": "😊", "value": "happy" },
+        { "label": "😑", "value": "neutral" },
+        { "label": "😔", "value": "down" },
+        { "label": "😭", "value": "sad" },
+        { "label": "😡", "value": "angry" }
       ]
     }
-  },
+  ],
 
-  "hooks": {
-    "onSaved:daily_mood": "js:onDailyMoodLogged"
-  }
+  "returning": [
+    { "type": "messages", "key": "intro_returning", "bind": ["name"], "autofade": true },
+    { "type": "goto", "to": "moodCheck" }
+  ]
 }
